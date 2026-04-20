@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
 use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,10 +17,17 @@ class OrderController extends Controller
     public function index(Request $request): Response
     {
         $status = $request->query('status');
+        $search = $request->query('search');
 
         $orders = Order::query()
             ->with('creator:id,name')
             ->when($status, fn ($query) => $query->where('status', $status))
+            ->when($search, fn ($query) => $query->where(function ($query) use ($search) {
+                $query->where('customer_name', 'like', "%{$search}%")
+                    ->orWhere('customer_phone', 'like', "%{$search}%")
+                    ->orWhere('customer_address', 'like', "%{$search}%")
+                    ->orWhere('order_code', 'like', "%{$search}%");
+            }))
             ->latest()
             ->paginate(20)
             ->withQueryString();
@@ -32,6 +40,7 @@ class OrderController extends Controller
                 'color' => $s->color(),
             ]),
             'currentStatus' => $status,
+            'currentSearch' => $search,
         ]);
     }
 
@@ -65,17 +74,37 @@ class OrderController extends Controller
         ]);
     }
 
+    public function edit(Order $order): Response
+    {
+        return Inertia::render('orders/Edit', [
+            'order' => $order,
+        ]);
+    }
+
     public function update(Request $request, Order $order): RedirectResponse
     {
-        $validated = $request->validate([
-            'status' => ['required', new Enum(OrderStatus::class)],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $order->update($validated);
+        if ($request->isMethod('PUT')) {
+            $validated = app(UpdateOrderRequest::class)->validated();
+            $order->update($validated);
+        } else {
+            $validated = $request->validate([
+                'status' => ['required', new Enum(OrderStatus::class)],
+                'notes' => ['nullable', 'string', 'max:1000'],
+            ]);
+            $order->update($validated);
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Order updated.')]);
 
         return to_route('orders.show', $order);
+    }
+
+    public function destroy(Order $order): RedirectResponse
+    {
+        $order->delete();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Order deleted.')]);
+
+        return to_route('orders.index');
     }
 }

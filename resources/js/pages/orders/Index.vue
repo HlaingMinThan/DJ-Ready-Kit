@@ -1,10 +1,22 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 import OrderController from '@/actions/App/Http/Controllers/OrderController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { index as ordersIndex, create as ordersCreate } from '@/routes/orders';
-import { Plus } from 'lucide-vue-next';
+import { Pencil, Plus, Search, Trash2 } from 'lucide-vue-next';
 
 type Status = {
     value: string;
@@ -32,6 +44,7 @@ type Props = {
     };
     statuses: Status[];
     currentStatus: string | null;
+    currentSearch: string | null;
 };
 
 const props = defineProps<Props>();
@@ -47,12 +60,24 @@ defineOptions({
     },
 });
 
+const search = ref(props.currentSearch ?? '');
+let debounceTimer: ReturnType<typeof setTimeout>;
+
+watch(search, (value) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        const params: Record<string, string> = {};
+        if (props.currentStatus) params.status = props.currentStatus;
+        if (value) params.search = value;
+        router.get(ordersIndex.url(), params, { preserveState: true });
+    }, 300);
+});
+
 function filterByStatus(status: string | null) {
-    router.get(
-        ordersIndex.url(),
-        status ? { status } : {},
-        { preserveState: true },
-    );
+    const params: Record<string, string> = {};
+    if (status) params.status = status;
+    if (search.value) params.search = search.value;
+    router.get(ordersIndex.url(), params, { preserveState: true });
 }
 
 function statusColor(color: string): string {
@@ -86,23 +111,33 @@ function statusLabel(statusValue: string): { label: string; color: string } {
             </Button>
         </div>
 
-        <div class="flex flex-wrap gap-2">
-            <Button
-                size="sm"
-                :variant="!currentStatus ? 'default' : 'outline'"
-                @click="filterByStatus(null)"
-            >
-                All
-            </Button>
-            <Button
-                v-for="s in statuses"
-                :key="s.value"
-                size="sm"
-                :variant="currentStatus === s.value ? 'default' : 'outline'"
-                @click="filterByStatus(s.value)"
-            >
-                {{ s.label }}
-            </Button>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-wrap gap-2">
+                <Button
+                    size="sm"
+                    :variant="!currentStatus ? 'default' : 'outline'"
+                    @click="filterByStatus(null)"
+                >
+                    All
+                </Button>
+                <Button
+                    v-for="s in statuses"
+                    :key="s.value"
+                    size="sm"
+                    :variant="currentStatus === s.value ? 'default' : 'outline'"
+                    @click="filterByStatus(s.value)"
+                >
+                    {{ s.label }}
+                </Button>
+            </div>
+            <div class="relative w-full sm:w-64">
+                <Search class="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                <Input
+                    v-model="search"
+                    placeholder="Search name, phone, address..."
+                    class="pl-9"
+                />
+            </div>
         </div>
 
         <div class="overflow-x-auto rounded-lg border">
@@ -118,6 +153,7 @@ function statusLabel(statusValue: string): { label: string; color: string } {
                         <th class="px-4 py-3 text-right font-medium">Total</th>
                         <th class="px-4 py-3 text-left font-medium">Status</th>
                         <th class="px-4 py-3 text-left font-medium">Date</th>
+                        <th class="px-4 py-3 text-right font-medium">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -168,10 +204,52 @@ function statusLabel(statusValue: string): { label: string; color: string } {
                                 ).toLocaleDateString()
                             }}
                         </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <Button variant="ghost" size="icon" class="size-8" as-child>
+                                    <Link :href="OrderController.edit.url({ order: order.id })">
+                                        <Pencil class="size-3.5" />
+                                    </Link>
+                                </Button>
+                                <Dialog>
+                                    <DialogTrigger as-child>
+                                        <Button variant="ghost" size="icon" class="size-8 text-destructive hover:text-destructive">
+                                            <Trash2 class="size-3.5" />
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <Form
+                                            v-bind="OrderController.destroy.form({ order: order.id })"
+                                            v-slot="{ processing }"
+                                        >
+                                            <DialogHeader class="space-y-3">
+                                                <DialogTitle>Delete this order?</DialogTitle>
+                                                <DialogDescription>
+                                                    Order <span class="font-mono font-medium">{{ order.order_code }}</span>
+                                                    will be permanently deleted.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <DialogFooter class="mt-6 gap-2">
+                                                <DialogClose as-child>
+                                                    <Button variant="secondary">Cancel</Button>
+                                                </DialogClose>
+                                                <Button
+                                                    type="submit"
+                                                    variant="destructive"
+                                                    :disabled="processing"
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </DialogFooter>
+                                        </Form>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                        </td>
                     </tr>
                     <tr v-if="orders.data.length === 0">
                         <td
-                            colspan="7"
+                            colspan="8"
                             class="px-4 py-8 text-center text-muted-foreground"
                         >
                             No orders found.

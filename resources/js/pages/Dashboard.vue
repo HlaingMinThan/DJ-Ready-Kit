@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import OrderController from '@/actions/App/Http/Controllers/OrderController';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
 import { index as ordersIndex } from '@/routes/orders';
+import { ArrowRight } from 'lucide-vue-next';
 
 type StatusCount = {
     value: string;
@@ -11,11 +14,22 @@ type StatusCount = {
     count: number;
 };
 
-type Props = {
-    statusCounts: StatusCount[];
+type Order = {
+    id: number;
+    order_code: string;
+    customer_name: string;
+    customer_phone: string;
+    status: string;
+    created_at: string;
+    creator: { id: number; name: string };
 };
 
-defineProps<Props>();
+type Props = {
+    statusCounts: StatusCount[];
+    recentOrders: Order[];
+};
+
+const props = defineProps<Props>();
 
 defineOptions({
     layout: {
@@ -49,6 +63,17 @@ function badgeColor(color: string): string {
     };
     return map[color] ?? '';
 }
+
+function statusInfo(statusValue: string): StatusCount {
+    return (
+        props.statusCounts.find((s) => s.value === statusValue) ?? {
+            value: statusValue,
+            label: statusValue,
+            color: '',
+            count: 0,
+        }
+    );
+}
 </script>
 
 <template>
@@ -76,6 +101,72 @@ function badgeColor(color: string): string {
                     {{ sc.count }}
                 </p>
             </Link>
+        </div>
+
+        <div class="space-y-3">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold tracking-tight">Recent Orders</h2>
+                <Button variant="ghost" size="sm" as-child>
+                    <Link :href="ordersIndex.url()">
+                        View All
+                        <ArrowRight class="ml-1 size-4" />
+                    </Link>
+                </Button>
+            </div>
+
+            <div class="overflow-x-auto rounded-lg border">
+                <table class="w-full text-sm">
+                    <thead class="border-b bg-muted/50">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-medium">Code</th>
+                            <th class="px-4 py-3 text-left font-medium">Customer</th>
+                            <th class="px-4 py-3 text-left font-medium">Status</th>
+                            <th class="px-4 py-3 text-left font-medium">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="order in recentOrders"
+                            :key="order.id"
+                            class="border-b transition-colors hover:bg-muted/50"
+                        >
+                            <td class="px-4 py-3">
+                                <Link
+                                    :href="OrderController.show.url({ order: order.id })"
+                                    class="font-mono text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                >
+                                    {{ order.order_code }}
+                                </Link>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div>{{ order.customer_name }}</div>
+                                <div class="text-xs text-muted-foreground">
+                                    {{ order.customer_phone }}
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <Badge
+                                    variant="secondary"
+                                    :class="badgeColor(statusInfo(order.status).color)"
+                                >
+                                    {{ statusInfo(order.status).label }}
+                                </Badge>
+                            </td>
+                            <td class="px-4 py-3 text-muted-foreground">
+                                {{ new Date(order.created_at).toLocaleDateString() }}
+                            </td>
+                        </tr>
+                        <tr v-if="recentOrders.length === 0">
+                            <td
+                                colspan="4"
+                                class="px-4 py-8 text-center text-muted-foreground"
+                            >
+                                No orders yet.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </template>

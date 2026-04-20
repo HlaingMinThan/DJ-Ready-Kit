@@ -23,8 +23,14 @@ class DashboardController extends Controller
             'count' => $counts->get($s->value, 0),
         ]);
 
+        $recentOrders = Order::with('creator:id,name')
+            ->latest()
+            ->take(5)
+            ->get();
+
         return Inertia::render('Dashboard', [
             'statusCounts' => $statusCounts,
+            'recentOrders' => $recentOrders,
         ]);
     }
 }

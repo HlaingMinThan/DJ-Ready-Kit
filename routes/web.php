@@ -16,7 +16,7 @@ Route::get('track/search', [OrderTrackController::class, 'show'])->name('track.s
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
-    Route::resource('orders', OrderController::class)->only(['index', 'create', 'store', 'show', 'update']);
+    Route::resource('orders', OrderController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 });
 
 require __DIR__.'/settings.php';

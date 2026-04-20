@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import OrderController from '@/actions/App/Http/Controllers/OrderController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import {
     Select,
     SelectContent,
@@ -14,6 +24,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { index as ordersIndex } from '@/routes/orders';
+import { Pencil } from 'lucide-vue-next';
 
 type Status = {
     value: string;
@@ -93,13 +104,21 @@ function currentStatusInfo(): Status {
                     by {{ order.creator.name }}
                 </p>
             </div>
-            <Badge
-                variant="secondary"
-                :class="statusColor(currentStatusInfo().color)"
-                class="text-sm"
-            >
-                {{ currentStatusInfo().label }}
-            </Badge>
+            <div class="flex items-center gap-2">
+                <Button variant="outline" size="sm" as-child>
+                    <Link :href="OrderController.edit.url({ order: order.id })">
+                        <Pencil class="mr-1 size-3.5" />
+                        Edit
+                    </Link>
+                </Button>
+                <Badge
+                    variant="secondary"
+                    :class="statusColor(currentStatusInfo().color)"
+                    class="text-sm"
+                >
+                    {{ currentStatusInfo().label }}
+                </Badge>
+            </div>
         </div>
 
         <div class="rounded-lg border p-4">
@@ -181,6 +200,54 @@ function currentStatusInfo(): Status {
                 </div>
                 <Button :disabled="processing">Update</Button>
             </Form>
+        </div>
+        <div class="space-y-3">
+            <Heading
+                variant="small"
+                title="Delete Order"
+            />
+            <div
+                class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10"
+            >
+                <div class="relative space-y-0.5 text-red-600 dark:text-red-100">
+                    <p class="font-medium">Warning</p>
+                    <p class="text-sm">
+                        This will permanently delete the order. This cannot be undone.
+                    </p>
+                </div>
+                <Dialog>
+                    <DialogTrigger as-child>
+                        <Button variant="destructive">Delete Order</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <Form
+                            v-bind="OrderController.destroy.form({ order: order.id })"
+                            v-slot="{ processing }"
+                        >
+                            <DialogHeader class="space-y-3">
+                                <DialogTitle>Are you sure you want to delete this order?</DialogTitle>
+                                <DialogDescription>
+                                    Order <span class="font-mono font-medium">{{ order.order_code }}</span>
+                                    will be permanently deleted.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <DialogFooter class="mt-6 gap-2">
+                                <DialogClose as-child>
+                                    <Button variant="secondary">Cancel</Button>
+                                </DialogClose>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    :disabled="processing"
+                                >
+                                    Delete Order
+                                </Button>
+                            </DialogFooter>
+                        </Form>
+                    </DialogContent>
+                </Dialog>
+            </div>
         </div>
     </div>
 </template>
