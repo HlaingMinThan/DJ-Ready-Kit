@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { dashboard } from '@/routes';
 import OrderTrackController from '@/actions/App/Http/Controllers/OrderTrackController';
-import { ArrowLeft, Check } from 'lucide-vue-next';
+import { ArrowLeft, Check, Search } from 'lucide-vue-next';
 
 type TrackedOrder = {
     order_code: string;
@@ -48,8 +50,33 @@ function stepIndex(status: string): number {
 <template>
     <Head title="Order Status" />
 
-    <div class="flex min-h-screen flex-col items-center justify-center bg-background p-6">
-        <main class="w-full max-w-md">
+    <div class="flex min-h-screen flex-col bg-background">
+        <!-- Nav bar -->
+        <header class="border-b border-border/50 px-5 py-3 sm:px-8">
+            <nav class="mx-auto flex max-w-5xl items-center justify-between">
+                <Link
+                    href="/"
+                    class="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-accent"
+                >
+                    <ArrowLeft class="size-4 text-muted-foreground transition-transform group-hover:-translate-x-0.5" />
+                    <div class="flex items-center gap-2">
+                        <div class="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                            <AppLogoIcon class="size-4" />
+                        </div>
+                        <span class="text-sm font-semibold">DJ Ready Kit</span>
+                    </div>
+                </Link>
+                <Link
+                    v-if="$page.props.auth?.user"
+                    :href="dashboard()"
+                    class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                    Dashboard
+                </Link>
+            </nav>
+        </header>
+
+        <main class="flex w-full max-w-md flex-1 flex-col justify-center self-center px-6 py-10">
             <div class="overflow-hidden rounded-2xl border bg-card shadow-lg">
                 <template v-if="order">
                     <!-- Status header -->

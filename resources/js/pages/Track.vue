@@ -5,9 +5,9 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { dashboard, login } from '@/routes';
+import { dashboard } from '@/routes';
 import OrderTrackController from '@/actions/App/Http/Controllers/OrderTrackController';
-import { Search } from 'lucide-vue-next';
+import { ArrowLeft, Search } from 'lucide-vue-next';
 
 defineOptions({ layout: false });
 
@@ -22,31 +22,37 @@ function search() {
 <template>
     <Head title="Track Your Order" />
 
-    <div class="flex min-h-screen flex-col items-center justify-center bg-background p-6">
-        <header class="mb-8 w-full max-w-md text-right">
-            <nav class="flex items-center justify-end gap-3 text-sm">
+    <div class="flex min-h-screen flex-col bg-background">
+        <!-- Nav bar -->
+        <header class="border-b border-border/50 px-5 py-3 sm:px-8">
+            <nav class="mx-auto flex max-w-5xl items-center justify-between">
+                <Link
+                    href="/"
+                    class="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-accent"
+                >
+                    <ArrowLeft class="size-4 text-muted-foreground transition-transform group-hover:-translate-x-0.5" />
+                    <div class="flex items-center gap-2">
+                        <div class="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                            <AppLogoIcon class="size-4" />
+                        </div>
+                        <span class="text-sm font-semibold">DJ Ready Kit</span>
+                    </div>
+                </Link>
                 <Link
                     v-if="$page.props.auth?.user"
                     :href="dashboard()"
-                    class="inline-block rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                     Dashboard
-                </Link>
-                <Link
-                    v-else
-                    :href="login()"
-                    class="inline-block rounded-lg px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-                >
-                    Team Login
                 </Link>
             </nav>
         </header>
 
-        <main class="w-full max-w-md">
+        <main class="flex w-full max-w-md flex-1 flex-col justify-center self-center px-6 py-10">
             <div class="overflow-hidden rounded-2xl border bg-card shadow-lg">
                 <div class="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 text-center">
                     <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
-                        <AppLogoIcon class="size-8" />
+                        <Search class="size-7" />
                     </div>
                     <h1 class="text-xl font-bold tracking-tight text-foreground">
                         Track Your Order
