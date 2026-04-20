@@ -190,7 +190,7 @@ const steps = [
                             <!-- CTAs -->
                             <div class="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start hero-item">
                                 <a
-                                    href="https://t.me/djreadykitmyanmarchannel"
+                                    href="https://t.me/djreadykitmyanmar"
                                     target="_blank"
                                     rel="noopener"
                                     class="cta-glow group inline-flex items-center justify-center gap-2.5 rounded-xl bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.97] sm:py-3"
@@ -336,7 +336,7 @@ const steps = [
                     <div class="mt-10 grid gap-4 sm:grid-cols-2">
                         <!-- TikTok -->
                         <a
-                            href="https://www.tiktok.com/@creativecodermm"
+                            href="https://www.tiktok.com/@djreadykitmyanmar"
                             target="_blank"
                             rel="noopener"
                             class="group flex items-center gap-4 rounded-2xl border border-border bg-card/40 p-5 backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/[0.07]"
@@ -349,7 +349,7 @@ const steps = [
                             </div>
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-bold text-foreground">TikTok</p>
-                                <p class="truncate text-xs text-muted-foreground">@creativecodermm</p>
+                                <p class="truncate text-xs text-muted-foreground">@djreadykitmyanmar</p>
                             </div>
                             <ChevronRight class="size-4 shrink-0 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
                         </a>
@@ -386,7 +386,7 @@ const steps = [
                     </p>
                     <div class="flex items-center gap-3">
                         <a
-                            href="https://www.tiktok.com/@creativecodermm"
+                            href="https://www.tiktok.com/@djreadykitmyanmar"
                             target="_blank"
                             rel="noopener"
                             class="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-primary"
