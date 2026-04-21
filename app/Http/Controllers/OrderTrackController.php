@@ -32,6 +32,9 @@ class OrderTrackController extends Controller
                 'status' => $order->status->value,
                 'status_label' => $order->status->label(),
                 'status_color' => $order->status->color(),
+                'amount_paid' => $order->amount_paid,
+                'remaining_balance' => $order->remaining_balance,
+                'payment_status' => $order->payment_status,
                 'created_at' => $order->created_at->toDateTimeString(),
             ] : null,
         ]);

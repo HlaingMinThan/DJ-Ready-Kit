@@ -15,6 +15,13 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { index as ordersIndex, create as ordersCreate } from '@/routes/orders';
 import { Pencil, Plus, Search, Trash2 } from 'lucide-vue-next';
 
@@ -32,6 +39,9 @@ type Order = {
     item_description: string;
     quantity: number;
     total_price: string;
+    amount_paid: string;
+    remaining_balance: string;
+    payment_status: 'paid' | 'partial' | 'unpaid';
     status: string;
     created_at: string;
     creator: { id: number; name: string };
@@ -45,6 +55,7 @@ type Props = {
     statuses: Status[];
     currentStatus: string | null;
     currentSearch: string | null;
+    currentPayment: string | null;
 };
 
 const props = defineProps<Props>();
@@ -61,23 +72,33 @@ defineOptions({
 });
 
 const search = ref(props.currentSearch ?? '');
+const selectedPayment = ref(props.currentPayment ?? 'all');
 let debounceTimer: ReturnType<typeof setTimeout>;
+
+function buildParams(overrides: Record<string, string | null> = {}): Record<string, string> {
+    const params: Record<string, string> = {};
+    const status = overrides.status !== undefined ? overrides.status : props.currentStatus;
+    const payment = overrides.payment !== undefined ? overrides.payment : (selectedPayment.value !== 'all' ? selectedPayment.value : null);
+    const searchVal = overrides.search !== undefined ? overrides.search : search.value;
+    if (status) params.status = status;
+    if (payment) params.payment = payment;
+    if (searchVal) params.search = searchVal;
+    return params;
+}
 
 watch(search, (value) => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-        const params: Record<string, string> = {};
-        if (props.currentStatus) params.status = props.currentStatus;
-        if (value) params.search = value;
-        router.get(ordersIndex.url(), params, { preserveState: true });
+        router.get(ordersIndex.url(), buildParams({ search: value || null }), { preserveState: true });
     }, 300);
 });
 
+watch(selectedPayment, (value) => {
+    router.get(ordersIndex.url(), buildParams({ payment: value === 'all' ? null : value }), { preserveState: true });
+});
+
 function filterByStatus(status: string | null) {
-    const params: Record<string, string> = {};
-    if (status) params.status = status;
-    if (search.value) params.search = search.value;
-    router.get(ordersIndex.url(), params, { preserveState: true });
+    router.get(ordersIndex.url(), buildParams({ status }), { preserveState: true });
 }
 
 function statusColor(color: string): string {
@@ -89,6 +110,16 @@ function statusColor(color: string): string {
         red: 'bg-red-100 text-red-800 dark:bg-red-900/80 dark:text-red-200',
     };
     return map[color] ?? '';
+}
+
+function paymentBadge(order: Order): { label: string; class: string } {
+    if (order.payment_status === 'paid') {
+        return { label: 'Paid', class: 'bg-green-100 text-green-800 dark:bg-green-900/80 dark:text-green-200' };
+    }
+    if (order.payment_status === 'partial') {
+        return { label: `Left ${Number(order.remaining_balance).toLocaleString()}`, class: 'bg-amber-100 text-amber-800 dark:bg-amber-900/80 dark:text-amber-200' };
+    }
+    return { label: 'Unpaid', class: 'bg-red-100 text-red-800 dark:bg-red-900/80 dark:text-red-200' };
 }
 
 function statusLabel(statusValue: string): { label: string; color: string } {
@@ -114,13 +145,25 @@ function statusLabel(statusValue: string): { label: string; color: string } {
 
         <!-- Filters -->
         <div class="flex flex-col gap-2.5">
-            <div class="relative">
-                <Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    v-model="search"
-                    placeholder="Search name, phone, address..."
-                    class="h-11 pl-10 text-base sm:h-10 sm:text-sm"
-                />
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        v-model="search"
+                        placeholder="Search name, phone, address..."
+                        class="h-11 pl-10 text-base sm:h-10 sm:text-sm"
+                    />
+                </div>
+                <Select v-model="selectedPayment">
+                    <SelectTrigger class="h-11 w-32 text-base sm:h-10 sm:w-28 sm:text-sm">
+                        <SelectValue placeholder="Payment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="left">Left</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <div class="flex gap-1.5 overflow-x-auto pb-0.5">
                 <Button
@@ -156,9 +199,14 @@ function statusLabel(statusValue: string): { label: string; color: string } {
                     <span class="font-mono text-sm font-medium text-primary">
                         {{ order.order_code }}
                     </span>
-                    <Badge variant="secondary" :class="statusColor(statusLabel(order.status).color)" class="text-xs">
-                        {{ statusLabel(order.status).label }}
-                    </Badge>
+                    <div class="flex items-center gap-1.5">
+                        <Badge variant="secondary" :class="paymentBadge(order).class" class="text-[10px]">
+                            {{ paymentBadge(order).label }}
+                        </Badge>
+                        <Badge variant="secondary" :class="statusColor(statusLabel(order.status).color)" class="text-xs">
+                            {{ statusLabel(order.status).label }}
+                        </Badge>
+                    </div>
                 </div>
                 <div class="mt-1.5">
                     <p class="text-sm font-medium">{{ order.customer_name }}</p>
@@ -216,6 +264,7 @@ function statusLabel(statusValue: string): { label: string; color: string } {
                         <th class="px-4 py-3 text-left font-medium">Item</th>
                         <th class="px-4 py-3 text-right font-medium">Qty</th>
                         <th class="px-4 py-3 text-right font-medium">Total</th>
+                        <th class="px-4 py-3 text-left font-medium">Payment</th>
                         <th class="px-4 py-3 text-left font-medium">Status</th>
                         <th class="px-4 py-3 text-left font-medium">Date</th>
                         <th class="px-4 py-3 text-right font-medium">Actions</th>
@@ -242,6 +291,11 @@ function statusLabel(statusValue: string): { label: string; color: string } {
                         <td class="px-4 py-3">{{ order.item_description }}</td>
                         <td class="px-4 py-3 text-right">{{ order.quantity }}</td>
                         <td class="px-4 py-3 text-right font-mono">{{ Number(order.total_price).toLocaleString() }}</td>
+                        <td class="px-4 py-3">
+                            <Badge variant="secondary" :class="paymentBadge(order).class">
+                                {{ paymentBadge(order).label }}
+                            </Badge>
+                        </td>
                         <td class="px-4 py-3">
                             <Badge variant="secondary" :class="statusColor(statusLabel(order.status).color)">
                                 {{ statusLabel(order.status).label }}
@@ -284,7 +338,7 @@ function statusLabel(statusValue: string): { label: string; color: string } {
                         </td>
                     </tr>
                     <tr v-if="orders.data.length === 0">
-                        <td colspan="8" class="px-4 py-8 text-center text-muted-foreground">No orders found.</td>
+                        <td colspan="9" class="px-4 py-8 text-center text-muted-foreground">No orders found.</td>
                     </tr>
                 </tbody>
             </table>

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
 import { index as ordersIndex } from '@/routes/orders';
-import { ArrowRight, Package, TrendingUp } from 'lucide-vue-next';
+import { ArrowRight, Banknote, CircleDollarSign, Package, TrendingUp, Wallet } from 'lucide-vue-next';
 
 type StatusCount = {
     value: string;
@@ -24,9 +24,16 @@ type Order = {
     creator: { id: number; name: string };
 };
 
+type PaymentSummary = {
+    total_revenue: number;
+    total_collected: number;
+    total_outstanding: number;
+};
+
 type Props = {
     statusCounts: StatusCount[];
     recentOrders: Order[];
+    paymentSummary: PaymentSummary;
 };
 
 const props = defineProps<Props>();
@@ -115,6 +122,37 @@ function statusInfo(statusValue: string): StatusCount {
                     {{ sc.count }}
                 </p>
             </Link>
+        </div>
+
+        <!-- Payment summary -->
+        <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
+            <div class="rounded-xl border p-3 sm:p-4">
+                <div class="flex items-center gap-2 text-muted-foreground">
+                    <Banknote class="size-4" />
+                    <span class="text-[11px] font-medium uppercase tracking-wider">Revenue</span>
+                </div>
+                <p class="mt-2 font-mono text-lg font-bold tracking-tight sm:text-xl">
+                    {{ paymentSummary.total_revenue.toLocaleString() }}
+                </p>
+            </div>
+            <div class="rounded-xl border border-green-300/40 bg-green-50 p-3 dark:border-green-700/40 dark:bg-green-950/50 sm:p-4">
+                <div class="flex items-center gap-2 text-green-700 dark:text-green-400">
+                    <CircleDollarSign class="size-4" />
+                    <span class="text-[11px] font-medium uppercase tracking-wider">Collected</span>
+                </div>
+                <p class="mt-2 font-mono text-lg font-bold tracking-tight text-green-700 dark:text-green-300 sm:text-xl">
+                    {{ paymentSummary.total_collected.toLocaleString() }}
+                </p>
+            </div>
+            <div class="rounded-xl border border-amber-300/40 bg-amber-50 p-3 dark:border-amber-700/40 dark:bg-amber-950/50 sm:p-4">
+                <div class="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                    <Wallet class="size-4" />
+                    <span class="text-[11px] font-medium uppercase tracking-wider">Outstanding</span>
+                </div>
+                <p class="mt-2 font-mono text-lg font-bold tracking-tight text-amber-700 dark:text-amber-300 sm:text-xl">
+                    {{ paymentSummary.total_outstanding.toLocaleString() }}
+                </p>
+            </div>
         </div>
 
         <!-- Recent orders -->

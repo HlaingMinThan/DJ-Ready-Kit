@@ -26,6 +26,7 @@ class OrderFactory extends Factory
             'item_description' => fake()->words(3, true),
             'quantity' => fake()->numberBetween(1, 10),
             'total_price' => fake()->randomFloat(2, 1000, 100000),
+            'amount_paid' => 0,
             'status' => OrderStatus::Pending,
             'notes' => fake()->optional()->sentence(),
             'created_by' => User::factory(),
@@ -50,5 +51,19 @@ class OrderFactory extends Factory
     public function returned(): static
     {
         return $this->state(['status' => OrderStatus::Returned]);
+    }
+
+    public function partiallyPaid(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'amount_paid' => round($attributes['total_price'] / 2, 2),
+        ]);
+    }
+
+    public function fullyPaid(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'amount_paid' => $attributes['total_price'],
+        ]);
     }
 }

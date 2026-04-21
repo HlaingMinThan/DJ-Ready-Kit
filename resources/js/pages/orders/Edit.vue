@@ -145,6 +145,22 @@ defineOptions({
                         </div>
                     </div>
                     <div>
+                        <Label for="amount_paid" class="mb-1 block text-sm">
+                            Amount Paid <span class="font-normal text-muted-foreground">(optional)</span>
+                        </Label>
+                        <Input
+                            id="amount_paid"
+                            name="amount_paid"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            :default-value="order.amount_paid"
+                            placeholder="0"
+                            class="h-10 rounded-lg text-sm"
+                        />
+                        <InputError :message="errors.amount_paid" class="mt-1" />
+                    </div>
+                    <div>
                         <Label for="notes" class="mb-1 block text-sm">
                             Notes <span class="font-normal text-muted-foreground">(optional)</span>
                         </Label>

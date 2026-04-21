@@ -21,6 +21,7 @@ class UpdateOrderRequest extends FormRequest
             'item_description' => ['required', 'string', 'max:255'],
             'quantity' => ['required', 'integer', 'min:1'],
             'total_price' => ['required', 'numeric', 'min:0'],
+            'amount_paid' => ['nullable', 'numeric', 'min:0', 'lte:total_price'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }

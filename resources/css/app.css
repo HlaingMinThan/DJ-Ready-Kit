@@ -170,3 +170,24 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Sonner toast type styling (overrides inline styles) */
+[data-sonner-toast][data-type="error"] {
+    background-color: hsl(0 63% 31%) !important;
+    color: hsl(0 0% 95%) !important;
+    border-color: hsl(0 50% 24%) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+    color: hsl(0 80% 70%) !important;
+}
+
+[data-sonner-toast][data-type="success"] {
+    background-color: hsl(142 50% 25%) !important;
+    color: hsl(0 0% 95%) !important;
+    border-color: hsl(142 40% 18%) !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+    color: hsl(142 70% 60%) !important;
+}

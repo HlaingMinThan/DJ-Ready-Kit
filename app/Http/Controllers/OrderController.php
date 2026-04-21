@@ -18,10 +18,13 @@ class OrderController extends Controller
     {
         $status = $request->query('status');
         $search = $request->query('search');
+        $payment = $request->query('payment');
 
         $orders = Order::query()
             ->with('creator:id,name')
             ->when($status, fn ($query) => $query->where('status', $status))
+            ->when($payment === 'paid', fn ($query) => $query->whereRaw('amount_paid >= total_price'))
+            ->when($payment === 'left', fn ($query) => $query->whereRaw('amount_paid < total_price'))
             ->when($search, fn ($query) => $query->where(function ($query) use ($search) {
                 $query->where('customer_name', 'like', "%{$search}%")
                     ->orWhere('customer_phone', 'like', "%{$search}%")
@@ -41,6 +44,7 @@ class OrderController extends Controller
             ]),
             'currentStatus' => $status,
             'currentSearch' => $search,
+            'currentPayment' => $payment,
         ]);
     }
 
@@ -88,8 +92,13 @@ class OrderController extends Controller
             $order->update($validated);
         } else {
             $validated = $request->validate([
-                'status' => ['required', new Enum(OrderStatus::class)],
+                'status' => ['sometimes', 'required', new Enum(OrderStatus::class)],
                 'notes' => ['nullable', 'string', 'max:1000'],
+                'amount_paid' => ['sometimes', 'numeric', 'min:0', function (string $attribute, mixed $value, \Closure $fail) use ($order) {
+                    if (bccomp((string) $value, (string) $order->total_price, 2) > 0) {
+                        $fail('Amount paid cannot exceed total price.');
+                    }
+                }],
             ]);
             $order->update($validated);
         }

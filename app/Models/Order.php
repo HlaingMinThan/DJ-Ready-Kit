@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\OrderStatus;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,7 @@ use Illuminate\Support\Str;
     'item_description',
     'quantity',
     'total_price',
+    'amount_paid',
     'status',
     'notes',
 ])]
@@ -24,6 +26,9 @@ class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
     use HasFactory;
+
+    /** @var list<string> */
+    protected $appends = ['remaining_balance', 'payment_status'];
 
     protected static function booted(): void
     {
@@ -45,11 +50,41 @@ class Order extends Model
     /**
      * @return array<string, string>
      */
+    /**
+     * @return Attribute<string, never>
+     */
+    protected function remainingBalance(): Attribute
+    {
+        return Attribute::get(fn (): string => bcsub((string) $this->total_price, (string) $this->amount_paid, 2));
+    }
+
+    /**
+     * @return Attribute<string, never>
+     */
+    protected function paymentStatus(): Attribute
+    {
+        return Attribute::get(function (): string {
+            if (bccomp((string) $this->amount_paid, (string) $this->total_price, 2) >= 0) {
+                return 'paid';
+            }
+
+            if (bccomp((string) $this->amount_paid, '0', 2) > 0) {
+                return 'partial';
+            }
+
+            return 'unpaid';
+        });
+    }
+
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
             'status' => OrderStatus::class,
             'total_price' => 'decimal:2',
+            'amount_paid' => 'decimal:2',
             'quantity' => 'integer',
         ];
     }

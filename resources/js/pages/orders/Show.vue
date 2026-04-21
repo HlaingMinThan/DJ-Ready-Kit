@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 import OrderController from '@/actions/App/Http/Controllers/OrderController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { index as ordersIndex } from '@/routes/orders';
 import { ArrowLeft, MapPin, Package, Pencil, Phone, User } from 'lucide-vue-next';
 
@@ -39,6 +42,9 @@ type Order = {
     item_description: string;
     quantity: number;
     total_price: string;
+    amount_paid: string;
+    remaining_balance: string;
+    payment_status: 'paid' | 'partial' | 'unpaid';
     status: string;
     notes: string | null;
     created_at: string;
@@ -81,6 +87,47 @@ watch(selectedStatus, (newStatus) => {
         },
     );
 });
+
+const editAmountPaid = ref(props.order.amount_paid);
+const updatingPayment = ref(false);
+
+const paymentLabel = computed(() => {
+    const map: Record<string, string> = { paid: 'Paid', partial: 'Partially Paid', unpaid: 'Unpaid' };
+    return map[props.order.payment_status] ?? 'Unpaid';
+});
+
+const paymentBadgeColor = computed(() => {
+    const map: Record<string, string> = {
+        paid: 'bg-green-100 text-green-800 dark:bg-green-900/80 dark:text-green-200',
+        partial: 'bg-amber-100 text-amber-800 dark:bg-amber-900/80 dark:text-amber-200',
+        unpaid: 'bg-red-100 text-red-800 dark:bg-red-900/80 dark:text-red-200',
+    };
+    return map[props.order.payment_status] ?? '';
+});
+
+function updatePayment() {
+    const paid = parseFloat(editAmountPaid.value) || 0;
+    const total = parseFloat(props.order.total_price) || 0;
+
+    if (paid > total) {
+        toast.error(`Amount paid cannot exceed total price (${total.toLocaleString()})`);
+        return;
+    }
+    if (paid < 0) {
+        toast.error('Amount paid cannot be negative');
+        return;
+    }
+
+    updatingPayment.value = true;
+    router.patch(
+        OrderController.update.url({ order: props.order.id }),
+        { amount_paid: editAmountPaid.value },
+        {
+            preserveScroll: true,
+            onFinish: () => { updatingPayment.value = false; },
+        },
+    );
+}
 
 function statusColor(color: string): string {
     const map: Record<string, string> = {
@@ -202,6 +249,51 @@ function currentStatusInfo(): Status {
             <div v-if="order.notes" class="mt-3 rounded-lg bg-muted/50 p-3">
                 <p class="text-xs text-muted-foreground">Notes</p>
                 <p class="mt-0.5 text-sm">{{ order.notes }}</p>
+            </div>
+        </div>
+
+        <!-- Payment -->
+        <div class="rounded-xl border bg-card p-3 sm:p-4 lg:p-5">
+            <div class="mb-3 flex items-center justify-between">
+                <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment</h2>
+                <Badge variant="secondary" :class="paymentBadgeColor">
+                    {{ paymentLabel }}
+                </Badge>
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-center">
+                <div class="rounded-lg bg-muted/50 p-2.5">
+                    <p class="text-[10px] text-muted-foreground uppercase tracking-wider">Total</p>
+                    <p class="mt-0.5 font-mono text-sm font-bold">{{ Number(order.total_price).toLocaleString() }}</p>
+                </div>
+                <div class="rounded-lg bg-green-500/10 p-2.5">
+                    <p class="text-[10px] text-green-600 dark:text-green-400 uppercase tracking-wider">Paid</p>
+                    <p class="mt-0.5 font-mono text-sm font-bold text-green-700 dark:text-green-300">{{ Number(order.amount_paid).toLocaleString() }}</p>
+                </div>
+                <div class="rounded-lg bg-amber-500/10 p-2.5">
+                    <p class="text-[10px] text-amber-600 dark:text-amber-400 uppercase tracking-wider">Remaining</p>
+                    <p class="mt-0.5 font-mono text-sm font-bold text-amber-700 dark:text-amber-300">{{ Number(order.remaining_balance).toLocaleString() }}</p>
+                </div>
+            </div>
+            <div class="mt-3 flex items-end gap-2">
+                <div class="flex-1">
+                    <Label for="edit_amount_paid" class="mb-1 block text-xs text-muted-foreground">Update Amount Paid</Label>
+                    <Input
+                        id="edit_amount_paid"
+                        v-model="editAmountPaid"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        class="h-10 text-base sm:h-9 sm:text-sm"
+                    />
+                </div>
+                <Button
+                    size="sm"
+                    class="h-10 px-4 sm:h-9"
+                    :disabled="updatingPayment"
+                    @click="updatePayment"
+                >
+                    Update
+                </Button>
             </div>
         </div>
 

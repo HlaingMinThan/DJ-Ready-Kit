@@ -13,6 +13,9 @@ type TrackedOrder = {
     item_description: string;
     quantity: number;
     total_price: string;
+    amount_paid: string;
+    remaining_balance: string;
+    payment_status: string;
     status: string;
     status_label: string;
     status_color: string;
@@ -137,6 +140,14 @@ function stepIndex(status: string): number {
                             <div class="flex justify-between rounded-lg bg-muted/50 px-3 py-2">
                                 <dt class="text-muted-foreground">Total</dt>
                                 <dd class="font-mono font-medium">{{ Number(order.total_price).toLocaleString() }}</dd>
+                            </div>
+                            <div class="flex justify-between rounded-lg bg-green-500/10 px-3 py-2">
+                                <dt class="text-green-600 dark:text-green-400">Paid</dt>
+                                <dd class="font-mono font-medium text-green-700 dark:text-green-300">{{ Number(order.amount_paid).toLocaleString() }}</dd>
+                            </div>
+                            <div v-if="order.payment_status !== 'paid'" class="flex justify-between rounded-lg bg-amber-500/10 px-3 py-2">
+                                <dt class="text-amber-600 dark:text-amber-400">Remaining</dt>
+                                <dd class="font-mono font-medium text-amber-700 dark:text-amber-300">{{ Number(order.remaining_balance).toLocaleString() }}</dd>
                             </div>
                             <div class="flex justify-between rounded-lg bg-muted/50 px-3 py-2">
                                 <dt class="text-muted-foreground">Order Date</dt>

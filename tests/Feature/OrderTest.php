@@ -217,3 +217,82 @@ test('dashboard shows recent orders', function () {
         ->get(route('dashboard'))
         ->assertOk();
 });
+
+// Payment tracking tests
+
+test('order can be created with amount_paid', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('orders.store'), [
+            'customer_name' => 'Jane Doe',
+            'customer_phone' => '09111111111',
+            'customer_address' => '456 Oak St',
+            'item_description' => 'DJ Stick',
+            'quantity' => 1,
+            'total_price' => 400000,
+            'amount_paid' => 200000,
+        ])
+        ->assertRedirect();
+
+    $order = Order::latest()->first();
+    expect($order->amount_paid)->toBe('200000.00');
+    expect($order->remaining_balance)->toBe('200000.00');
+    expect($order->payment_status)->toBe('partial');
+});
+
+test('order defaults to zero amount_paid', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('orders.store'), [
+            'customer_name' => 'Test',
+            'customer_phone' => '09000000000',
+            'customer_address' => 'Address',
+            'item_description' => 'Item',
+            'quantity' => 1,
+            'total_price' => 100000,
+        ])
+        ->assertRedirect();
+
+    $order = Order::latest()->first();
+    expect($order->amount_paid)->toBe('0.00');
+    expect($order->payment_status)->toBe('unpaid');
+});
+
+test('amount_paid cannot exceed total_price on store', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('orders.store'), [
+            'customer_name' => 'Test',
+            'customer_phone' => '09000000000',
+            'customer_address' => 'Address',
+            'item_description' => 'Item',
+            'quantity' => 1,
+            'total_price' => 100000,
+            'amount_paid' => 200000,
+        ])
+        ->assertSessionHasErrors('amount_paid');
+});
+
+test('amount_paid can be updated via PATCH', function () {
+    $user = User::factory()->create();
+    $order = Order::factory()->create(['created_by' => $user->id, 'total_price' => 400000, 'amount_paid' => 0]);
+
+    $this->actingAs($user)
+        ->patch(route('orders.update', $order), [
+            'amount_paid' => 200000,
+        ])
+        ->assertRedirect();
+
+    expect($order->refresh()->amount_paid)->toBe('200000.00');
+    expect($order->payment_status)->toBe('partial');
+});
+
+test('fully paid order has correct payment status', function () {
+    $order = Order::factory()->fullyPaid()->create();
+
+    expect($order->payment_status)->toBe('paid');
+    expect($order->remaining_balance)->toBe('0.00');
+});
