@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 import OrderController from '@/actions/App/Http/Controllers/OrderController';
-import InputError from '@/components/InputError.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -66,6 +65,22 @@ defineOptions({
 });
 
 const selectedStatus = ref(props.order.status);
+const updatingStatus = ref(false);
+
+watch(selectedStatus, (newStatus) => {
+    if (newStatus === props.order.status) return;
+    updatingStatus.value = true;
+    router.patch(
+        OrderController.update.url({ order: props.order.id }),
+        { status: newStatus },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                updatingStatus.value = false;
+            },
+        },
+    );
+});
 
 function statusColor(color: string): string {
     const map: Record<string, string> = {
@@ -193,30 +208,20 @@ function currentStatusInfo(): Status {
         <!-- Update Status -->
         <div class="rounded-xl border bg-card p-3 sm:p-4 lg:p-5">
             <h2 class="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Update Status</h2>
-            <Form
-                v-bind="OrderController.update.form({ order: order.id })"
-                class="flex items-end gap-2 sm:gap-3"
-                v-slot="{ errors, processing }"
-            >
-                <div class="grid flex-1 gap-1.5">
-                    <Select name="status" v-model="selectedStatus">
-                        <SelectTrigger class="h-11 text-base sm:h-9 sm:text-sm">
-                            <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem
-                                v-for="s in statuses"
-                                :key="s.value"
-                                :value="s.value"
-                            >
-                                {{ s.label }}
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <InputError :message="errors.status" />
-                </div>
-                <Button :disabled="processing" class="h-11 shadow-sm shadow-primary/20 sm:h-9">Update</Button>
-            </Form>
+            <Select v-model="selectedStatus" :disabled="updatingStatus">
+                <SelectTrigger class="h-11 text-base sm:h-9 sm:text-sm" :class="{ 'opacity-60': updatingStatus }">
+                    <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem
+                        v-for="s in statuses"
+                        :key="s.value"
+                        :value="s.value"
+                    >
+                        {{ s.label }}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
         </div>
 
         <!-- Delete -->

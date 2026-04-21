@@ -91,9 +91,7 @@ const steps = [
 <template>
     <Head title="DJ Ready Kit Myanmar — Plug & Play DJ USB" />
 
-    <!-- Force dark theme for landing page -->
-    <div class="dark">
-        <div class="landing-page min-h-screen bg-background text-foreground">
+    <div class="landing-page min-h-screen bg-background text-foreground">
 
             <!-- ═══════════════ NAVIGATION ═══════════════ -->
             <nav
@@ -409,7 +407,6 @@ const steps = [
                 </div>
             </footer>
 
-        </div>
     </div>
 </template>
 
