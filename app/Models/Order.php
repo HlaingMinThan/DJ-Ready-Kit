@@ -34,7 +34,7 @@ class Order extends Model
     {
         static::creating(function (Order $order) {
             if (empty($order->order_code)) {
-                $order->order_code = 'DJ-'.strtoupper(Str::random(8));
+                $order->order_code = 'DJ-' . strtoupper(Str::random(8));
             }
         });
     }
@@ -55,7 +55,9 @@ class Order extends Model
      */
     protected function remainingBalance(): Attribute
     {
-        return Attribute::get(fn (): string => bcsub((string) $this->total_price, (string) $this->amount_paid, 2));
+        return Attribute::get(
+            fn(): string =>     number_format($this->total_price - $this->amount_paid, 2, '.', '')
+        );
     }
 
     /**
