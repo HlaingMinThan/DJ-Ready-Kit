@@ -66,11 +66,14 @@ class Order extends Model
     protected function paymentStatus(): Attribute
     {
         return Attribute::get(function (): string {
-            if (bccomp((string) $this->amount_paid, (string) $this->total_price, 2) >= 0) {
+            $paid = (float) $this->amount_paid;
+            $total = (float) $this->total_price;
+
+            if (round($paid - $total, 2) >= 0) {
                 return 'paid';
             }
 
-            if (bccomp((string) $this->amount_paid, '0', 2) > 0) {
+            if (round($paid, 2) > 0) {
                 return 'partial';
             }
 
