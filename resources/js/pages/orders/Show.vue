@@ -47,6 +47,7 @@ type Order = {
     payment_status: 'paid' | 'partial' | 'unpaid';
     status: string;
     notes: string | null;
+    lead_source: string | null;
     created_at: string;
     updated_at: string;
     creator: { id: number; name: string };
@@ -139,6 +140,15 @@ function statusColor(color: string): string {
     };
     return map[color] ?? '';
 }
+
+const leadColors: Record<string, string> = {
+    tiktok: 'text-pink-500 dark:text-pink-400',
+    telegram: 'text-sky-500 dark:text-sky-400',
+    facebook: 'text-blue-600 dark:text-blue-400',
+};
+const leadLabels: Record<string, string> = { tiktok: 'TikTok', telegram: 'Telegram', facebook: 'Facebook' };
+function leadStyle(source: string): string { return leadColors[source] ?? ''; }
+function leadLabel(source: string): string { return leadLabels[source] ?? source; }
 
 function currentStatusInfo(): Status {
     return (
@@ -246,9 +256,15 @@ function currentStatusInfo(): Status {
                     </p>
                 </div>
             </div>
-            <div v-if="order.notes" class="mt-3 rounded-lg bg-muted/50 p-3">
-                <p class="text-xs text-muted-foreground">Notes</p>
-                <p class="mt-0.5 text-sm">{{ order.notes }}</p>
+            <div v-if="order.lead_source || order.notes" class="mt-3 flex flex-col gap-2">
+                <div v-if="order.lead_source" class="rounded-lg bg-muted/50 p-3">
+                    <p class="text-xs text-muted-foreground">Lead Source</p>
+                    <p class="mt-0.5 text-sm font-medium" :class="leadStyle(order.lead_source)">{{ leadLabel(order.lead_source) }}</p>
+                </div>
+                <div v-if="order.notes" class="rounded-lg bg-muted/50 p-3">
+                    <p class="text-xs text-muted-foreground">Notes</p>
+                    <p class="mt-0.5 text-sm">{{ order.notes }}</p>
+                </div>
             </div>
         </div>
 

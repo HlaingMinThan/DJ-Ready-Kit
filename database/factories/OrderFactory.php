@@ -29,6 +29,7 @@ class OrderFactory extends Factory
             'amount_paid' => 0,
             'status' => OrderStatus::Pending,
             'notes' => fake()->optional()->sentence(),
+            'lead_source' => fake()->optional()->randomElement(['tiktok', 'telegram', 'facebook']),
             'created_by' => User::factory(),
         ];
     }

@@ -42,6 +42,7 @@ type Order = {
     amount_paid: string;
     remaining_balance: string;
     payment_status: 'paid' | 'partial' | 'unpaid';
+    lead_source: string | null;
     status: string;
     created_at: string;
     creator: { id: number; name: string };
@@ -50,6 +51,7 @@ type Order = {
 type Props = {
     orders: {
         data: Order[];
+        from: number | null;
         links: { url: string | null; label: string; active: boolean }[];
     };
     statuses: Status[];
@@ -122,6 +124,15 @@ function paymentBadge(order: Order): { label: string; class: string } {
     return { label: 'Unpaid', class: 'bg-red-100 text-red-800 dark:bg-red-900/80 dark:text-red-200' };
 }
 
+function leadSourceStyle(source: string | null): { label: string; class: string } {
+    const map: Record<string, { label: string; class: string }> = {
+        tiktok: { label: 'TikTok', class: 'text-pink-500 dark:text-pink-400' },
+        telegram: { label: 'Telegram', class: 'text-sky-500 dark:text-sky-400' },
+        facebook: { label: 'Facebook', class: 'text-blue-600 dark:text-blue-400' },
+    };
+    return source ? (map[source] ?? { label: source, class: 'text-muted-foreground' }) : { label: '—', class: 'text-muted-foreground' };
+}
+
 function statusLabel(statusValue: string): { label: string; color: string } {
     const s = props.statuses.find((st) => st.value === statusValue);
     return s ?? { label: statusValue, color: '' };
@@ -190,13 +201,14 @@ function statusLabel(statusValue: string): { label: string; color: string } {
         <!-- Mobile card view -->
         <div class="flex flex-col gap-2 sm:hidden">
             <Link
-                v-for="order in orders.data"
+                v-for="(order, i) in orders.data"
                 :key="order.id"
                 :href="OrderController.show.url({ order: order.id })"
                 class="block rounded-xl border bg-card p-3.5 transition-all active:scale-[0.98]"
             >
                 <div class="flex items-start justify-between">
                     <span class="font-mono text-sm font-medium text-primary">
+                        <span class="mr-1.5 text-xs text-muted-foreground">{{ (orders.from ?? 1) + i }}.</span>
                         {{ order.order_code }}
                     </span>
                     <div class="flex items-center gap-1.5">
@@ -213,9 +225,9 @@ function statusLabel(statusValue: string): { label: string; color: string } {
                     <p class="text-xs text-muted-foreground">{{ order.customer_phone }}</p>
                 </div>
                 <div class="mt-2 flex items-center justify-between border-t pt-2">
-                    <div class="text-xs text-muted-foreground">
-                        {{ order.item_description }} &middot;
+                    <div class="flex items-center gap-2 text-xs">
                         <span class="font-mono font-medium text-foreground">{{ Number(order.total_price).toLocaleString() }}</span>
+                        <span v-if="order.lead_source" class="font-medium" :class="leadSourceStyle(order.lead_source).class">· {{ leadSourceStyle(order.lead_source).label }}</span>
                     </div>
                     <div class="flex items-center gap-0.5" @click.prevent>
                         <Button variant="ghost" size="icon" class="size-9" as-child>
@@ -259,12 +271,12 @@ function statusLabel(statusValue: string): { label: string; color: string } {
             <table class="w-full text-sm">
                 <thead class="border-b bg-muted/50">
                     <tr>
+                        <th class="px-4 py-3 text-center font-medium w-12">#</th>
                         <th class="px-4 py-3 text-left font-medium">Code</th>
                         <th class="px-4 py-3 text-left font-medium">Customer</th>
-                        <th class="px-4 py-3 text-left font-medium">Item</th>
-                        <th class="px-4 py-3 text-right font-medium">Qty</th>
                         <th class="px-4 py-3 text-right font-medium">Total</th>
                         <th class="px-4 py-3 text-left font-medium">Payment</th>
+                        <th class="px-4 py-3 text-left font-medium">Lead</th>
                         <th class="px-4 py-3 text-left font-medium">Status</th>
                         <th class="px-4 py-3 text-left font-medium">Date</th>
                         <th class="px-4 py-3 text-right font-medium">Actions</th>
@@ -272,10 +284,11 @@ function statusLabel(statusValue: string): { label: string; color: string } {
                 </thead>
                 <tbody>
                     <tr
-                        v-for="order in orders.data"
+                        v-for="(order, i) in orders.data"
                         :key="order.id"
                         class="border-b last:border-0 transition-colors hover:bg-muted/50"
                     >
+                        <td class="px-4 py-3 text-center text-muted-foreground">{{ (orders.from ?? 1) + i }}</td>
                         <td class="px-4 py-3">
                             <Link
                                 :href="OrderController.show.url({ order: order.id })"
@@ -288,13 +301,14 @@ function statusLabel(statusValue: string): { label: string; color: string } {
                             <div>{{ order.customer_name }}</div>
                             <div class="text-xs text-muted-foreground">{{ order.customer_phone }}</div>
                         </td>
-                        <td class="px-4 py-3">{{ order.item_description }}</td>
-                        <td class="px-4 py-3 text-right">{{ order.quantity }}</td>
                         <td class="px-4 py-3 text-right font-mono">{{ Number(order.total_price).toLocaleString() }}</td>
                         <td class="px-4 py-3">
                             <Badge variant="secondary" :class="paymentBadge(order).class">
                                 {{ paymentBadge(order).label }}
                             </Badge>
+                        </td>
+                        <td class="px-4 py-3 text-sm font-medium" :class="leadSourceStyle(order.lead_source).class">
+                            {{ leadSourceStyle(order.lead_source).label }}
                         </td>
                         <td class="px-4 py-3">
                             <Badge variant="secondary" :class="statusColor(statusLabel(order.status).color)">

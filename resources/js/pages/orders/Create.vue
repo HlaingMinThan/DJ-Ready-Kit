@@ -93,6 +93,18 @@ defineOptions({
                         <InputError :message="errors.amount_paid" class="mt-1" />
                     </div>
                     <div>
+                        <Label for="lead_source" class="mb-1 block text-sm">
+                            Lead Source <span class="font-normal text-muted-foreground">(optional)</span>
+                        </Label>
+                        <select id="lead_source" name="lead_source" class="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]">
+                            <option value="">-- Select --</option>
+                            <option value="tiktok">TikTok</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="facebook">Facebook</option>
+                        </select>
+                        <InputError :message="errors.lead_source" class="mt-1" />
+                    </div>
+                    <div>
                         <Label for="notes" class="mb-1 block text-sm">
                             Notes <span class="font-normal text-muted-foreground">(optional)</span>
                         </Label>

@@ -23,6 +23,7 @@ class UpdateOrderRequest extends FormRequest
             'total_price' => ['required', 'numeric', 'min:0'],
             'amount_paid' => ['nullable', 'numeric', 'min:0', 'lte:total_price'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'lead_source' => ['nullable', 'string', 'in:tiktok,telegram,facebook'],
         ];
     }
 }

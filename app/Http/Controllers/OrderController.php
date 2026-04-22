@@ -22,22 +22,22 @@ class OrderController extends Controller
 
         $orders = Order::query()
             ->with('creator:id,name')
-            ->when($status, fn($query) => $query->where('status', $status))
-            ->when($payment === 'paid', fn($query) => $query->whereRaw('amount_paid >= total_price'))
-            ->when($payment === 'left', fn($query) => $query->whereRaw('amount_paid < total_price'))
-            ->when($search, fn($query) => $query->where(function ($query) use ($search) {
+            ->when($status, fn ($query) => $query->where('status', $status))
+            ->when($payment === 'paid', fn ($query) => $query->whereRaw('amount_paid >= total_price'))
+            ->when($payment === 'left', fn ($query) => $query->whereRaw('amount_paid < total_price'))
+            ->when($search, fn ($query) => $query->where(function ($query) use ($search) {
                 $query->where('customer_name', 'like', "%{$search}%")
                     ->orWhere('customer_phone', 'like', "%{$search}%")
                     ->orWhere('customer_address', 'like', "%{$search}%")
                     ->orWhere('order_code', 'like', "%{$search}%");
             }))
             ->latest()
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('orders/Index', [
             'orders' => $orders,
-            'statuses' => collect(OrderStatus::cases())->map(fn(OrderStatus $s) => [
+            'statuses' => collect(OrderStatus::cases())->map(fn (OrderStatus $s) => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
@@ -70,7 +70,7 @@ class OrderController extends Controller
 
         return Inertia::render('orders/Show', [
             'order' => $order,
-            'statuses' => collect(OrderStatus::cases())->map(fn(OrderStatus $s) => [
+            'statuses' => collect(OrderStatus::cases())->map(fn (OrderStatus $s) => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
@@ -95,7 +95,7 @@ class OrderController extends Controller
                 'status' => ['sometimes', 'required', new Enum(OrderStatus::class)],
                 'notes' => ['nullable', 'string', 'max:1000'],
                 'amount_paid' => ['sometimes', 'numeric', 'min:0', function (string $attribute, mixed $value, \Closure $fail) use ($order) {
-                    if (round((float)$value, 2) > round((float)$order->total_price, 2)) {
+                    if (round((float) $value, 2) > round((float) $order->total_price, 2)) {
                         $fail('Amount paid cannot exceed total price.');
                     }
                 }],
